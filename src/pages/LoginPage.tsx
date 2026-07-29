@@ -99,6 +99,44 @@ export function LoginPage() {
             </Button>
           </form>
 
+          <div className="mt-6 border-t border-surface-200 pt-5 dark:border-surface-800">
+            <p className="mb-2 text-center text-xs font-semibold text-surface-500 uppercase tracking-wider">
+              Quick Demo Login
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('admin@courieros.com');
+                  setPassword('Password123!');
+                }}
+                className="rounded-lg border border-surface-200 bg-surface-50 px-2 py-1.5 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700"
+              >
+                Admin
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('driver@courieros.com');
+                  setPassword('Password123!');
+                }}
+                className="rounded-lg border border-surface-200 bg-surface-50 px-2 py-1.5 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700"
+              >
+                Driver
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('customer@courieros.com');
+                  setPassword('Password123!');
+                }}
+                className="rounded-lg border border-surface-200 bg-surface-50 px-2 py-1.5 text-xs font-medium text-surface-700 hover:bg-surface-100 dark:border-surface-700 dark:bg-surface-800 dark:text-surface-300 dark:hover:bg-surface-700"
+              >
+                Customer
+              </button>
+            </div>
+          </div>
+
           <p className="mt-6 text-center text-sm text-surface-500 dark:text-surface-400">
             Don't have an account?{' '}
             <Link

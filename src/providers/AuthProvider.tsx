@@ -41,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         localStorage.removeItem(STORAGE_KEYS.token);
+        localStorage.removeItem('cos_current_user_id');
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -68,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEYS.token);
+    localStorage.removeItem('cos_current_user_id');
     setUser(null);
   }, []);
 

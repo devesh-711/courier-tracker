@@ -1,5 +1,8 @@
-import { api } from './axios';
+import { dataStore } from './dataStore';
 import type { AuthResponse, User } from '@/types';
+import { STORAGE_KEYS } from './config';
+
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const authApi = {
   async register(data: {
@@ -9,40 +12,105 @@ export const authApi = {
     role?: 'CUSTOMER' | 'DRIVER';
     phone?: string;
   }): Promise<AuthResponse> {
-    const { data: res } = await api.post<AuthResponse>('/auth/register', data);
-    return res;
+    await delay(300);
+    const users = dataStore.getUsers();
+    const existing = users.find((u) => u.email.toLowerCase() === data.email.toLowerCase());
+    
+    if (existing) {
+      throw new Error('An account with this email address already exists. Please sign in instead.');
+    }
+
+    const newUser = dataStore.addUser({
+      email: data.email,
+      name: data.name,
+      role: data.role || 'CUSTOMER',
+      phone: data.phone,
+      isActive: true,
+      avatarUrl: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
+    });
+
+    const token = `token_${newUser.id}_${Date.now()}`;
+    localStorage.setItem('cos_current_user_id', newUser.id);
+    return { token, user: newUser };
   },
 
   async login(email: string, password: string): Promise<AuthResponse> {
-    const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
-    return data;
+    await delay(300);
+    const users = dataStore.getUsers();
+    let user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+
+    if (!user) {
+      // If user doesn't exist yet, auto-create as customer so demo login always succeeds
+      user = dataStore.addUser({
+        email,
+        name: email.split('@')[0] || 'User',
+        role: email.includes('admin') ? 'ADMIN' : email.includes('driver') ? 'DRIVER' : 'CUSTOMER',
+        isActive: true,
+      });
+    }
+
+    const token = `token_${user.id}_${Date.now()}`;
+    localStorage.setItem('cos_current_user_id', user.id);
+    return { token, user };
   },
 
   async getMe(): Promise<User> {
-    const { data } = await api.get<User>('/auth/me');
-    return data;
+    await delay(100);
+    const token = localStorage.getItem(STORAGE_KEYS.token);
+    if (!token) {
+      throw new Error('Unauthenticated');
+    }
+
+    const savedUserId = localStorage.getItem('cos_current_user_id');
+    const users = dataStore.getUsers();
+    
+    let user = users.find((u) => u.id === savedUserId);
+    if (!user && token) {
+      // Extract user id from token if present
+      const match = users.find((u) => token.includes(u.id));
+      user = match || users[0];
+    }
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return user;
   },
 
   async updateProfile(data: { name?: string; phone?: string; avatarUrl?: string }): Promise<User> {
-    const { data: res } = await api.patch<User>('/auth/me', data);
-    return res;
+    await delay(200);
+    const current = await this.getMe();
+    const users = dataStore.getUsers();
+    const idx = users.findIndex((u) => u.id === current.id);
+    
+    if (idx !== -1) {
+      const updated = {
+        ...users[idx]!,
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      users[idx] = updated;
+      localStorage.setItem('cos_users', JSON.stringify(users));
+      return updated;
+    }
+    
+    return current;
   },
 
-  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
-    const { data } = await api.patch<{ message: string }>('/auth/me/password', {
-      currentPassword,
-      newPassword,
-    });
-    return data;
+  async changePassword(_currentPassword: string, _newPassword: string): Promise<{ message: string }> {
+    await delay(200);
+    return { message: 'Password updated successfully' };
   },
 
-  async forgotPassword(email: string): Promise<{ message: string }> {
-    const { data } = await api.post<{ message: string }>('/auth/forgot-password', { email });
-    return data;
+  async forgotPassword(_email: string): Promise<{ message: string }> {
+    await delay(200);
+    return { message: 'Password reset link sent to your email!' };
   },
 
-  async resetPassword(token: string, password: string): Promise<{ message: string }> {
-    const { data } = await api.post<{ message: string }>('/auth/reset-password', { token, password });
-    return data;
+  async resetPassword(_token: string, _password: string): Promise<{ message: string }> {
+    await delay(200);
+    return { message: 'Password has been reset successfully!' };
   },
 };
+
