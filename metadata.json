@@ -1,0 +1,6 @@
+{
+  "name": "CourierOS",
+  "description": "Enterprise Courier & Shipment Tracking System with Real-Time Updates, Customer, Agent & Admin Dashboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
