@@ -16,7 +16,7 @@ export function DashboardPage() {
     ? { ...user, role: overrideRole || user.role }
     : {
         id: 'usr_admin',
-        name: 'Sarah Enterprise',
+        name: 'Crimson Dawn Enterprises',
         email: 'admin@courieros.com',
         role: overrideRole || 'ADMIN',
         isActive: true,

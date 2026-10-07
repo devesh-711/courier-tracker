@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Truck, MapPin, Package, CheckCircle2, QrCode, CornerDownRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Badge } from '@/components/ui';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button, Badge, useToast } from '@/components/ui';
 import { ThemeToggle } from '@/components/ui';
 import { dataStore } from '@/lib/dataStore';
 import type { Shipment, ShipmentStatus } from '@/types';
 import { QRCodeModal } from '@/components/customer/QRCodeModal';
 import { formatDate } from '@/utils/formatters';
+import { ShipmentMap } from '@/components/tracking/ShipmentMap';
 
 export function PublicTrackingPage() {
+  const { toast } = useToast();
   const [query, setQuery] = useState('COUR-98234-NY');
   const [searchedShipment, setSearchedShipment] = useState<Shipment | null>(() =>
     dataStore.getShipmentByTracking('COUR-98234-NY') || null,
@@ -220,6 +222,42 @@ export function PublicTrackingPage() {
                     })}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Live Interactive Map Card */}
+            <Card className="overflow-hidden p-0">
+              <CardHeader className="p-4 sm:p-5 border-b border-surface-200 dark:border-surface-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-950 text-primary-600 dark:text-primary-400">
+                      <Truck className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm font-bold">Real-Time GPS Map</CardTitle>
+                      <CardDescription className="text-xs">Live tracking coordinates along delivery corridor</CardDescription>
+                    </div>
+                  </div>
+                  <Badge variant="primary">{searchedShipment.status.replace(/_/g, ' ')}</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ShipmentMap
+                  shipment={searchedShipment}
+                  onLocationUpdate={(lat, lng, city) => {
+                    const updated = dataStore.updateShipmentLocation(searchedShipment.trackingNumber, lat, lng, city);
+                    if (updated) setSearchedShipment({ ...updated });
+                  }}
+                  onGeoFenceTransition={(event) => {
+                    const isEnter = event.transition === 'ENTER';
+                    toast(
+                      isEnter
+                        ? `🚚 Package ${searchedShipment.trackingNumber} entered "${event.zone.name}" (${event.distanceKm} km from destination)!`
+                        : `⚠️ Package ${searchedShipment.trackingNumber} exited "${event.zone.name}" perimeter (${event.distanceKm} km away).`,
+                      isEnter ? 'success' : 'warning',
+                    );
+                  }}
+                />
               </CardContent>
             </Card>
 

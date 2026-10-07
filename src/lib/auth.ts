@@ -34,7 +34,8 @@ export const authApi = {
     return { token, user: newUser };
   },
 
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password?: string): Promise<AuthResponse> {
+    void password;
     await delay(300);
     const users = dataStore.getUsers();
     let user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
@@ -98,17 +99,22 @@ export const authApi = {
     return current;
   },
 
-  async changePassword(_currentPassword: string, _newPassword: string): Promise<{ message: string }> {
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    void currentPassword;
+    void newPassword;
     await delay(200);
     return { message: 'Password updated successfully' };
   },
 
-  async forgotPassword(_email: string): Promise<{ message: string }> {
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    void email;
     await delay(200);
     return { message: 'Password reset link sent to your email!' };
   },
 
-  async resetPassword(_token: string, _password: string): Promise<{ message: string }> {
+  async resetPassword(token: string, password: string): Promise<{ message: string }> {
+    void token;
+    void password;
     await delay(200);
     return { message: 'Password has been reset successfully!' };
   },

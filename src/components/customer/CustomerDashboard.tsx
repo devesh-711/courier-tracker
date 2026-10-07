@@ -54,7 +54,7 @@ export function CustomerDashboard({ currentUser }: CustomerDashboardProps) {
   const activeCount = shipments.filter((s) => ['CREATED', 'PENDING', 'PICKED_UP', 'WAREHOUSE', 'SORTING_FACILITY', 'IN_TRANSIT', 'OUT_FOR_DELIVERY'].includes(s.status)).length;
   const deliveredCount = shipments.filter((s) => s.status === 'DELIVERED').length;
   const inTransitCount = shipments.filter((s) => s.status === 'IN_TRANSIT' || s.status === 'OUT_FOR_DELIVERY').length;
-  const totalSpent = shipments.reduce((sum, s) => sum + (s.price || 35), 0);
+  const totalSpent = shipments.reduce((sum, s) => sum + (s.price || 1450), 0);
 
   const notifications = dataStore.getNotifications(currentUser.id);
 

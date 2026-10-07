@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
 @tailwind components;
@@ -84,5 +85,31 @@
 
   .badge {
     @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* Custom Leaflet styling */
+  .leaflet-div-icon {
+    background: transparent !important;
+    border: none !important;
+  }
+
+  .leaflet-popup-content-wrapper {
+    @apply rounded-xl border border-surface-200 bg-white/95 p-0 text-surface-900 shadow-xl backdrop-blur-md dark:border-surface-700 dark:bg-surface-900/95 dark:text-surface-100;
+  }
+
+  .leaflet-popup-content {
+    margin: 0 !important;
+    line-height: inherit !important;
+  }
+
+  .leaflet-popup-tip {
+    @apply bg-white dark:bg-surface-900;
+  }
+
+  .leaflet-container {
+    font-family: inherit !important;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
   }
 }

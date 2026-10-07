@@ -1,11 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui';
 import { Truck } from 'lucide-react';
 
 const drivers = [
-  { name: 'John Martinez', vehicle: 'Van — NY-2841', status: 'On route', deliveries: 12 },
-  { name: 'Sarah Chen', vehicle: 'Truck — CA-9932', status: 'Available', deliveries: 0 },
-  { name: 'Mike Johnson', vehicle: 'Van — TX-1120', status: 'On route', deliveries: 8 },
-  { name: 'Emma Wilson', vehicle: 'Bike — OR-4471', status: 'Off duty', deliveries: 0 },
+  { name: 'Shankar', vehicle: 'Van — NY-2841', status: 'On route', deliveries: 12 },
+  { name: 'Abraham', vehicle: 'Truck — CA-9932', status: 'Available', deliveries: 0 },
+  { name: 'Daniel', vehicle: 'Van — TX-1120', status: 'On route', deliveries: 8 },
+  { name: 'Abishek', vehicle: 'Bike — OR-4471', status: 'Off duty', deliveries: 0 },
 ];
 
 export function FleetPage() {
@@ -32,16 +32,6 @@ export function FleetPage() {
           </Card>
         ))}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Fleet Overview</CardTitle>
-          <CardDescription>Vehicle and driver management will be available here</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-surface-400">Fleet management features coming in the next phase.</p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

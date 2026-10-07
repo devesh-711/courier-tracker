@@ -1,8 +1,10 @@
-export function formatCurrency(amount: number, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
+export function formatCurrency(amount: number | null | undefined, currency = 'INR'): string {
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency,
-  }).format(amount);
+    maximumFractionDigits: 2,
+  }).format(safeAmount);
 }
 
 export function formatWeight(weight: number, unit = 'kg'): string {

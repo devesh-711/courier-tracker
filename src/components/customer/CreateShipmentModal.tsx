@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { X, Package, Truck, ArrowRight, DollarSign, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { X, Package, Truck, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { Button, Input, Card } from '@/components/ui';
 import { dataStore } from '@/lib/dataStore';
 import type { ServiceType } from '@/types';
+import { formatCurrency } from '@/utils/formatters';
 
 interface CreateShipmentModalProps {
   isOpen: boolean;
@@ -39,26 +40,28 @@ export function CreateShipmentModal({
   const [weight, setWeight] = useState<number>(2.5);
   const [dimensions, setDimensions] = useState('30 x 20 x 15 cm');
   const [serviceType, setServiceType] = useState<ServiceType>('EXPRESS');
-  const [declaredValue, setDeclaredValue] = useState<number>(100);
+  const [declaredValue, setDeclaredValue] = useState<number>(5000);
   const [notes, setNotes] = useState('');
 
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  // Price Calculation Engine
+  // Price Calculation Engine (INR Realistic Logistics Rates)
   const baseRates: Record<ServiceType, number> = {
-    STANDARD: 15,
-    EXPRESS: 30,
-    SAME_DAY: 50,
-    OVERNIGHT: 65,
-    FREIGHT: 120,
+    STANDARD: 250,
+    EXPRESS: 550,
+    SAME_DAY: 950,
+    OVERNIGHT: 1450,
+    FREIGHT: 3200,
   };
 
   const calculatedPrice = Number(
-    (baseRates[serviceType] + weight * 3.5 + (declaredValue > 100 ? declaredValue * 0.02 : 0)).toFixed(
-      2,
-    ),
+    (
+      baseRates[serviceType] +
+      weight * 45 +
+      (declaredValue > 5000 ? (declaredValue - 5000) * 0.015 : 0)
+    ).toFixed(2),
   );
 
   const estimatedDays: Record<ServiceType, string> = {
@@ -119,8 +122,9 @@ export function CreateShipmentModal({
 
       onClose();
       if (onSuccess) onSuccess(created.trackingNumber);
-    } catch (err: any) {
-      setError(err?.message || 'Failed to create shipment.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create shipment.';
+      setError(message);
     }
   };
 
@@ -300,7 +304,7 @@ export function CreateShipmentModal({
                       <Truck className="h-3.5 w-3.5 text-primary-600" />
                     </div>
                     <span className="mt-1 text-2xs text-surface-500 dark:text-surface-400">
-                      ${baseRates[type]} base
+                      {formatCurrency(baseRates[type])} base
                     </span>
                   </button>
                 ))}
@@ -309,7 +313,7 @@ export function CreateShipmentModal({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Input
-                label="Declared Value ($)"
+                label="Declared Value (₹)"
                 type="number"
                 value={declaredValue}
                 onChange={(e) => setDeclaredValue(parseFloat(e.target.value) || 0)}
@@ -331,7 +335,7 @@ export function CreateShipmentModal({
                 </div>
                 <div className="text-right">
                   <p className="text-2xs text-surface-400 uppercase tracking-wider font-bold">Calculated Rate</p>
-                  <p className="text-xl font-bold text-primary-600 dark:text-primary-400">${calculatedPrice.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-primary-600 dark:text-primary-400">{formatCurrency(calculatedPrice)}</p>
                 </div>
               </div>
             </Card>
@@ -341,7 +345,7 @@ export function CreateShipmentModal({
                 Back
               </Button>
               <Button type="submit" leftIcon={<CheckCircle2 className="h-4 w-4" />}>
-                Confirm & Create Shipment (${calculatedPrice.toFixed(2)})
+                Confirm & Create Shipment ({formatCurrency(calculatedPrice)})
               </Button>
             </div>
           </form>

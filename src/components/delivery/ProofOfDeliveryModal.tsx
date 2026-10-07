@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { X, Camera, Check, Upload, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, Camera, Trash2, CheckCircle2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 
 interface ProofOfDeliveryModalProps {

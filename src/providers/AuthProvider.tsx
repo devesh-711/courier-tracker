@@ -36,8 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authApi
       .getMe()
       .then((profile) => {
-        const { customer, admin, deliveryAgent, ...userFields } = profile as unknown as Record<string, unknown>;
-        setUser(userFields as unknown as User);
+        setUser(profile);
       })
       .catch(() => {
         localStorage.removeItem(STORAGE_KEYS.token);
@@ -75,8 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     const profile = await authApi.getMe();
-    const { customer, admin, deliveryAgent, ...userFields } = profile as unknown as Record<string, unknown>;
-    setUser(userFields as unknown as User);
+    setUser(profile);
   }, []);
 
   const hasRole = useCallback(

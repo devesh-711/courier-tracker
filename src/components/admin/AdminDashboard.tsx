@@ -6,17 +6,12 @@ import {
   Building2,
   Truck,
   CreditCard,
-  FileSpreadsheet,
-  FileText,
   Search,
   Plus,
   Download,
-  Filter,
   ShieldCheck,
-  CheckCircle2,
   UserCheck,
   UserX,
-  AlertTriangle,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -47,11 +42,8 @@ export function AdminDashboard() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-  // Search & Pagination states
+  // Search states
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('ALL');
-  const [page, setPage] = useState(1);
-  const pageSize = 5;
 
   // Modals for adding
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -86,7 +78,7 @@ export function AdminDashboard() {
         .map((row) =>
           keys
             .map((k) => {
-              let cell = (row as any)[k] ?? '';
+              let cell = (row as Record<string, unknown>)[k] ?? '';
               cell = cell.toString().replace(/"/g, '""');
               if (cell.search(/("|,|\n)/g) >= 0) cell = `"${cell}"`;
               return cell;
@@ -176,8 +168,7 @@ export function AdminDashboard() {
           <button
             key={tab.id}
             onClick={() => {
-              setActiveTab(tab.id as any);
-              setPage(1);
+              setActiveTab(tab.id as 'analytics' | 'shipments' | 'users' | 'warehouses' | 'vehicles' | 'payments' | 'audit');
             }}
             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-all ${
               activeTab === tab.id
@@ -198,7 +189,9 @@ export function AdminDashboard() {
             <Card>
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-surface-400">Total System Revenue</p>
-                <p className="mt-1 text-2xl font-black text-surface-900 dark:text-surface-100">$18,490.50</p>
+                <p className="mt-1 text-2xl font-black text-surface-900 dark:text-surface-100">
+                  {formatCurrency(payments.reduce((sum, p) => sum + (p.amount || 0), 0) || 1849250.00)}
+                </p>
                 <p className="mt-2 text-2xs text-success-600 font-bold">+18.4% vs last month</p>
               </CardContent>
             </Card>
@@ -223,7 +216,7 @@ export function AdminDashboard() {
               <CardContent className="p-5">
                 <p className="text-xs font-medium text-surface-400">Fleet Availability</p>
                 <p className="mt-1 text-2xl font-black text-primary-600">83.3%</p>
-                <p className="mt-2 text-2xs text-surface-400">3 Active Drivers</p>
+                <p className="mt-2 text-2xs text-surface-400">4 Active Drivers</p>
               </CardContent>
             </Card>
           </div>
@@ -365,10 +358,10 @@ export function AdminDashboard() {
                           </span>
                         ) : (
                           <button
-                            onClick={() => dataStore.assignDriver(s.id, 'usr_agent1', 'Alex Rivera (Agent)')}
+                            onClick={() => dataStore.assignDriver(s.id, 'usr_agent1', 'Shankar')}
                             className="text-2xs font-bold text-accent-600 hover:underline"
                           >
-                            + Assign Alex Rivera
+                            + Assign Shankar
                           </button>
                         )}
                       </td>
@@ -376,7 +369,7 @@ export function AdminDashboard() {
                         <Badge variant="primary">{s.status.replace(/_/g, ' ')}</Badge>
                       </td>
                       <td className="px-4 py-3 font-bold text-surface-900 dark:text-surface-100">
-                        {formatCurrency(s.price || 35)}
+                        {formatCurrency(s.price || 1450)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <select
@@ -384,7 +377,7 @@ export function AdminDashboard() {
                           onChange={(e) =>
                             dataStore.updateShipmentStatus(
                               s.id,
-                              e.target.value as any,
+                              e.target.value as Shipment['status'],
                               `Status updated to ${e.target.value} by Admin`,
                               s.recipientCity,
                               { id: 'usr_admin', name: 'Admin', role: 'ADMIN' },
@@ -681,7 +674,7 @@ export function AdminDashboard() {
                 </label>
                 <select
                   value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value as any)}
+                  onChange={(e) => setNewUserRole(e.target.value as Role)}
                   className="h-9 w-full rounded-lg border border-surface-300 bg-white px-3 text-xs dark:border-surface-700 dark:bg-surface-800 dark:text-surface-100"
                 >
                   <option value="CUSTOMER">CUSTOMER</option>

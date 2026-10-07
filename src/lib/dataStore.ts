@@ -1,6 +1,7 @@
 import type {
   Shipment,
   ShipmentStatus,
+  Role,
   User,
   Warehouse,
   Branch,
@@ -8,16 +9,17 @@ import type {
   Payment,
   AuditLog,
   NotificationItem,
-  DeliveryProof,
   TrackingLog,
+  TrackingEventType,
 } from '@/types';
+import { getCityCoordinates, resolveShipmentCoordinates } from './geo';
 
 // Initial Mock Seed Data
 const initialUsers: User[] = [
   {
     id: 'usr_admin',
     email: 'admin@courieros.com',
-    name: 'Sarah Enterprise',
+    name: 'Crimson Dawn Enterprises',
     role: 'ADMIN',
     phone: '+1 (555) 019-2834',
     avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
@@ -27,10 +29,10 @@ const initialUsers: User[] = [
   },
   {
     id: 'usr_agent1',
-    email: 'driver@courieros.com',
-    name: 'Alex Rivera (Agent)',
+    email: 'shankar.driver@courieros.com',
+    name: 'Shankar',
     role: 'DRIVER',
-    phone: '+1 (555) 392-1029',
+    phone: '+91 98401 23456',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
     isActive: true,
     createdAt: '2025-01-12T09:30:00Z',
@@ -38,13 +40,36 @@ const initialUsers: User[] = [
   },
   {
     id: 'usr_agent2',
-    email: 'marcus.driver@courieros.com',
-    name: 'Marcus Vance',
+    email: 'abraham.driver@courieros.com',
+    name: 'Abraham',
     role: 'DRIVER',
-    phone: '+1 (555) 882-3920',
+    phone: '+91 98402 34567',
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
     isActive: true,
     createdAt: '2025-01-15T11:00:00Z',
     updatedAt: '2025-01-15T11:00:00Z',
+  },
+  {
+    id: 'usr_agent3',
+    email: 'daniel.driver@courieros.com',
+    name: 'Daniel',
+    role: 'DRIVER',
+    phone: '+91 98403 45678',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+    isActive: true,
+    createdAt: '2025-01-18T10:00:00Z',
+    updatedAt: '2025-01-18T10:00:00Z',
+  },
+  {
+    id: 'usr_agent4',
+    email: 'abishek.driver@courieros.com',
+    name: 'Abishek',
+    role: 'DRIVER',
+    phone: '+91 98404 56789',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+    isActive: true,
+    createdAt: '2025-01-20T14:00:00Z',
+    updatedAt: '2025-01-20T14:00:00Z',
   },
   {
     id: 'usr_customer1',
@@ -93,8 +118,8 @@ const initialShipments: Shipment[] = [
     recipientLongitude: -71.0589,
     weight: 4.5,
     dimensions: '35 x 25 x 15 cm',
-    declaredValue: 450,
-    price: 48.5,
+    declaredValue: 35000,
+    price: 1450.0,
     notes: 'Fragile handling requested',
     estimatedDelivery: '2026-07-30T17:00:00Z',
     currentLatitude: 41.5034,
@@ -102,7 +127,7 @@ const initialShipments: Shipment[] = [
     currentCity: 'Hartford, CT Hub',
     customerId: 'usr_customer1',
     assignedDriverId: 'usr_agent1',
-    assignedDriverName: 'Alex Rivera (Agent)',
+    assignedDriverName: 'Shankar',
     createdAt: '2026-07-28T09:15:00Z',
     updatedAt: '2026-07-29T10:30:00Z',
     trackingLogs: [
@@ -163,8 +188,8 @@ const initialShipments: Shipment[] = [
     recipientLongitude: -87.6253,
     weight: 2.1,
     dimensions: '20 x 20 x 10 cm',
-    declaredValue: 800,
-    price: 32.0,
+    declaredValue: 65000,
+    price: 2200.0,
     notes: 'Temperature sensitive - Keep cool',
     estimatedDelivery: '2026-07-29T16:00:00Z',
     currentLatitude: 41.8900,
@@ -172,7 +197,7 @@ const initialShipments: Shipment[] = [
     currentCity: 'Chicago Metro',
     customerId: 'usr_customer2',
     assignedDriverId: 'usr_agent1',
-    assignedDriverName: 'Alex Rivera (Agent)',
+    assignedDriverName: 'Shankar',
     createdAt: '2026-07-29T07:30:00Z',
     updatedAt: '2026-07-29T11:00:00Z',
     trackingLogs: [
@@ -188,7 +213,7 @@ const initialShipments: Shipment[] = [
         id: 'log_102_2',
         shipmentId: 'shp_102',
         eventType: 'OUT_FOR_DELIVERY',
-        message: 'Driver Alex Rivera dispatched for final delivery',
+        message: 'Driver Shankar dispatched for final delivery',
         city: 'Chicago, IL',
         timestamp: '2026-07-29T11:00:00Z',
       },
@@ -205,22 +230,29 @@ const initialShipments: Shipment[] = [
     senderCity: 'Los Angeles',
     senderState: 'CA',
     senderPostalCode: '90017',
+    senderLatitude: 34.0522,
+    senderLongitude: -118.2437,
     recipientName: 'John Doe',
     recipientPhone: '+1 (555) 902-8310',
     recipientAddress: '742 Evergreen Terrace',
     recipientCity: 'Springfield',
     recipientState: 'OR',
     recipientPostalCode: '97477',
+    recipientLatitude: 44.0462,
+    recipientLongitude: -123.022,
     weight: 6.8,
     dimensions: '40 x 30 x 20 cm',
-    declaredValue: 200,
-    price: 75.0,
+    declaredValue: 18500,
+    price: 3850.0,
     notes: 'Delivered at front porch',
     estimatedDelivery: '2026-07-28T15:00:00Z',
     actualDelivery: '2026-07-28T14:18:00Z',
+    currentLatitude: 44.0462,
+    currentLongitude: -123.022,
+    currentCity: 'Springfield, OR',
     customerId: 'usr_customer1',
     assignedDriverId: 'usr_agent2',
-    assignedDriverName: 'Marcus Vance',
+    assignedDriverName: 'Abraham',
     createdAt: '2026-07-27T10:00:00Z',
     updatedAt: '2026-07-28T14:18:00Z',
     deliveryProof: {
@@ -253,18 +285,25 @@ const initialShipments: Shipment[] = [
     senderCity: 'Austin',
     senderState: 'TX',
     senderPostalCode: '78701',
+    senderLatitude: 30.2672,
+    senderLongitude: -97.7431,
     recipientName: 'Robert Johnson',
     recipientPhone: '+1 (555) 662-1199',
     recipientAddress: '400 Travis St',
     recipientCity: 'Houston',
     recipientState: 'TX',
     recipientPostalCode: '77002',
+    recipientLatitude: 29.7604,
+    recipientLongitude: -95.3698,
     weight: 12.0,
     dimensions: '50 x 40 x 30 cm',
-    declaredValue: 150,
-    price: 28.5,
+    declaredValue: 12000,
+    price: 1850.0,
     notes: 'Awaiting courier pickup',
     estimatedDelivery: '2026-08-01T18:00:00Z',
+    currentLatitude: 30.2672,
+    currentLongitude: -97.7431,
+    currentCity: 'Austin Hub, TX',
     customerId: 'usr_customer1',
     createdAt: '2026-07-29T10:00:00Z',
     updatedAt: '2026-07-29T10:00:00Z',
@@ -370,7 +409,7 @@ const initialVehicles: Vehicle[] = [
     type: 'VAN',
     capacityKg: 1200,
     driverId: 'usr_agent1',
-    driverName: 'Alex Rivera (Agent)',
+    driverName: 'Shankar',
     fuelLevel: 82,
     status: 'EN_ROUTE',
   },
@@ -381,16 +420,29 @@ const initialVehicles: Vehicle[] = [
     type: 'TRUCK',
     capacityKg: 8000,
     driverId: 'usr_agent2',
-    driverName: 'Marcus Vance',
+    driverName: 'Abraham',
     fuelLevel: 65,
     status: 'AVAILABLE',
   },
   {
     id: 'veh_3',
+    code: 'VAN-305',
+    plateNumber: 'TX-K1120',
+    type: 'VAN',
+    capacityKg: 1500,
+    driverId: 'usr_agent3',
+    driverName: 'Daniel',
+    fuelLevel: 78,
+    status: 'EN_ROUTE',
+  },
+  {
+    id: 'veh_4',
     code: 'MTO-003',
     plateNumber: 'CA-P4411',
     type: 'MOTORCYCLE',
     capacityKg: 100,
+    driverId: 'usr_agent4',
+    driverName: 'Abishek',
     fuelLevel: 95,
     status: 'AVAILABLE',
   },
@@ -401,9 +453,9 @@ const initialPayments: Payment[] = [
     id: 'pay_1',
     shipmentId: 'shp_101',
     trackingNumber: 'COUR-98234-NY',
-    customerName: 'John Doe',
-    amount: 48.5,
-    currency: 'USD',
+    customerName: 'Apex Electronics',
+    amount: 1450.0,
+    currency: 'INR',
     status: 'PAID',
     paymentMethod: 'CREDIT_CARD',
     createdAt: '2026-07-28T09:15:00Z',
@@ -412,9 +464,9 @@ const initialPayments: Payment[] = [
     id: 'pay_2',
     shipmentId: 'shp_102',
     trackingNumber: 'COUR-44120-CHI',
-    customerName: 'Jane Smith',
-    amount: 32.0,
-    currency: 'USD',
+    customerName: 'BioMed Supply Co',
+    amount: 2200.0,
+    currency: 'INR',
     status: 'PAID',
     paymentMethod: 'DEBIT_CARD',
     createdAt: '2026-07-29T07:30:00Z',
@@ -423,9 +475,9 @@ const initialPayments: Payment[] = [
     id: 'pay_3',
     shipmentId: 'shp_103',
     trackingNumber: 'COUR-88192-LA',
-    customerName: 'John Doe',
-    amount: 75.0,
-    currency: 'USD',
+    customerName: 'Vanguard Retail',
+    amount: 3850.0,
+    currency: 'INR',
     status: 'PAID',
     paymentMethod: 'CREDIT_CARD',
     createdAt: '2026-07-27T10:00:00Z',
@@ -435,11 +487,66 @@ const initialPayments: Payment[] = [
     shipmentId: 'shp_104',
     trackingNumber: 'COUR-11029-TX',
     customerName: 'John Doe',
-    amount: 28.5,
-    currency: 'USD',
+    amount: 1850.0,
+    currency: 'INR',
     status: 'PAID',
     paymentMethod: 'BANK_TRANSFER',
     createdAt: '2026-07-29T10:00:00Z',
+  },
+  {
+    id: 'pay_b2b_1',
+    shipmentId: 'bulk_101',
+    trackingNumber: 'INV-B2B-8941',
+    customerName: 'Apex Electronics Corp',
+    amount: 485000.0,
+    currency: 'INR',
+    status: 'PAID',
+    paymentMethod: 'BANK_TRANSFER',
+    createdAt: '2026-07-25T14:30:00Z',
+  },
+  {
+    id: 'pay_b2b_2',
+    shipmentId: 'bulk_102',
+    trackingNumber: 'INV-B2B-8942',
+    customerName: 'BioMed Healthcare Logistics',
+    amount: 362500.0,
+    currency: 'INR',
+    status: 'PAID',
+    paymentMethod: 'BANK_TRANSFER',
+    createdAt: '2026-07-26T11:15:00Z',
+  },
+  {
+    id: 'pay_b2b_3',
+    shipmentId: 'bulk_103',
+    trackingNumber: 'INV-B2B-8943',
+    customerName: 'Vanguard Retail Distribution',
+    amount: 540000.0,
+    currency: 'INR',
+    status: 'PAID',
+    paymentMethod: 'BANK_TRANSFER',
+    createdAt: '2026-07-27T09:45:00Z',
+  },
+  {
+    id: 'pay_b2b_4',
+    shipmentId: 'bulk_104',
+    trackingNumber: 'INV-B2B-8944',
+    customerName: 'Midwest Industrial Logistics',
+    amount: 295000.0,
+    currency: 'INR',
+    status: 'PAID',
+    paymentMethod: 'BANK_TRANSFER',
+    createdAt: '2026-07-28T16:20:00Z',
+  },
+  {
+    id: 'pay_b2b_5',
+    shipmentId: 'bulk_105',
+    trackingNumber: 'INV-B2B-8945',
+    customerName: 'Pacific Coast Retainer',
+    amount: 157400.0,
+    currency: 'INR',
+    status: 'PAID',
+    paymentMethod: 'BANK_TRANSFER',
+    createdAt: '2026-07-29T08:00:00Z',
   },
 ];
 
@@ -447,7 +554,7 @@ const initialAuditLogs: AuditLog[] = [
   {
     id: 'audit_1',
     userId: 'usr_agent1',
-    userName: 'Alex Rivera',
+    userName: 'Shankar',
     userRole: 'DRIVER',
     action: 'STATUS_UPDATE',
     entity: 'SHIPMENT',
@@ -464,7 +571,7 @@ const initialAuditLogs: AuditLog[] = [
     action: 'CREATE_SHIPMENT',
     entity: 'SHIPMENT',
     entityId: 'COUR-11029-TX',
-    details: 'Booked standard package from Austin to Houston ($28.50)',
+    details: 'Booked standard package from Austin to Houston (₹1,850.00)',
     ipAddress: '72.14.201.2',
     timestamp: '2026-07-29T10:00:00Z',
   },
@@ -476,7 +583,7 @@ const initialAuditLogs: AuditLog[] = [
     action: 'ASSIGN_DRIVER',
     entity: 'SHIPMENT',
     entityId: 'COUR-44120-CHI',
-    details: 'Assigned driver Alex Rivera to shipment COUR-44120-CHI',
+    details: 'Assigned driver Shankar to shipment COUR-44120-CHI',
     ipAddress: '10.0.0.12',
     timestamp: '2026-07-29T10:45:00Z',
   },
@@ -515,10 +622,50 @@ class DataStore {
   }
 
   private initLocalStorage() {
-    if (!localStorage.getItem('cos_shipments')) {
+    // Shipments
+    const rawShipments = localStorage.getItem('cos_shipments');
+    if (!rawShipments) {
       localStorage.setItem('cos_shipments', JSON.stringify(initialShipments));
+    } else {
+      try {
+        const existing: Shipment[] = JSON.parse(rawShipments);
+        if (rawShipments.includes('Alex Rivera') || rawShipments.includes('Marcus Vance')) {
+          const updated = existing.map((s) => ({
+            ...s,
+            assignedDriverName:
+              s.assignedDriverName === 'Alex Rivera (Agent)' || s.assignedDriverName === 'Alex Rivera'
+                ? 'Shankar'
+                : s.assignedDriverName === 'Marcus Vance'
+                ? 'Abraham'
+                : s.assignedDriverName,
+          }));
+          localStorage.setItem('cos_shipments', JSON.stringify(updated));
+        }
+        if (existing.some((s) => (s.price !== undefined && s.price < 100) || (s.declaredValue !== undefined && s.declaredValue < 1000))) {
+          const updated = existing.map((s) => {
+            const initial = initialShipments.find((init) => init.id === s.id);
+            if (initial) {
+              return {
+                ...s,
+                price: initial.price,
+                declaredValue: initial.declaredValue,
+              };
+            }
+            return {
+              ...s,
+              price: (s.price || 35) < 100 ? Math.round((s.price || 35) * 45) : s.price,
+              declaredValue: (s.declaredValue || 100) < 1000 ? Math.round((s.declaredValue || 100) * 80) : s.declaredValue,
+            };
+          });
+          localStorage.setItem('cos_shipments', JSON.stringify(updated));
+        }
+      } catch {
+        localStorage.setItem('cos_shipments', JSON.stringify(initialShipments));
+      }
     }
-    if (!localStorage.getItem('cos_users')) {
+
+    const rawUsers = localStorage.getItem('cos_users');
+    if (!rawUsers || rawUsers.includes('Alex Rivera') || rawUsers.includes('Marcus Vance')) {
       localStorage.setItem('cos_users', JSON.stringify(initialUsers));
     }
     if (!localStorage.getItem('cos_warehouses')) {
@@ -527,15 +674,43 @@ class DataStore {
     if (!localStorage.getItem('cos_branches')) {
       localStorage.setItem('cos_branches', JSON.stringify(initialBranches));
     }
-    if (!localStorage.getItem('cos_vehicles')) {
+    const rawVehicles = localStorage.getItem('cos_vehicles');
+    if (!rawVehicles || rawVehicles.includes('Alex Rivera') || rawVehicles.includes('Marcus Vance')) {
       localStorage.setItem('cos_vehicles', JSON.stringify(initialVehicles));
     }
-    if (!localStorage.getItem('cos_payments')) {
+
+    // Payments: Ensure realistic INR revenue datasets
+    const rawPayments = localStorage.getItem('cos_payments');
+    if (!rawPayments) {
       localStorage.setItem('cos_payments', JSON.stringify(initialPayments));
+    } else {
+      try {
+        const existing: Payment[] = JSON.parse(rawPayments);
+        const total = existing.reduce((sum, p) => sum + (p.amount || 0), 0);
+        // If stored payments have the old unrealistic tiny amounts (e.g. 184 Rs or amounts < 100)
+        if (total < 10000 || existing.some((p: Payment) => p.currency === 'USD' || (p.amount !== undefined && p.amount < 100))) {
+          localStorage.setItem('cos_payments', JSON.stringify(initialPayments));
+        }
+      } catch {
+        localStorage.setItem('cos_payments', JSON.stringify(initialPayments));
+      }
     }
-    if (!localStorage.getItem('cos_audit_logs')) {
+
+    // Audit logs
+    const rawAudit = localStorage.getItem('cos_audit_logs');
+    if (!rawAudit) {
       localStorage.setItem('cos_audit_logs', JSON.stringify(initialAuditLogs));
+    } else {
+      try {
+        const existingStr = rawAudit;
+        if (existingStr.includes('28.50')) {
+          localStorage.setItem('cos_audit_logs', JSON.stringify(initialAuditLogs));
+        }
+      } catch {
+        localStorage.setItem('cos_audit_logs', JSON.stringify(initialAuditLogs));
+      }
     }
+
     if (!localStorage.getItem('cos_notifications')) {
       localStorage.setItem('cos_notifications', JSON.stringify(initialNotifications));
     }
@@ -555,7 +730,34 @@ class DataStore {
   // --- SHIPMENTS ---
   public getShipments(): Shipment[] {
     const raw = localStorage.getItem('cos_shipments');
-    return raw ? JSON.parse(raw) : initialShipments;
+    const list: Shipment[] = raw ? JSON.parse(raw) : initialShipments;
+    // Ensure all shipments have resolved coordinates
+    return list.map((s) => {
+      let changed = false;
+      const copy = { ...s };
+      if (copy.senderLatitude === undefined || copy.senderLongitude === undefined) {
+        const [lat, lng] = getCityCoordinates(copy.senderCity, copy.senderState);
+        copy.senderLatitude = lat;
+        copy.senderLongitude = lng;
+        changed = true;
+      }
+      if (copy.recipientLatitude === undefined || copy.recipientLongitude === undefined) {
+        const [lat, lng] = getCityCoordinates(copy.recipientCity, copy.recipientState);
+        copy.recipientLatitude = lat;
+        copy.recipientLongitude = lng;
+        changed = true;
+      }
+      if (copy.currentLatitude === undefined || copy.currentLongitude === undefined) {
+        const resolved = resolveShipmentCoordinates(copy);
+        copy.currentLatitude = resolved.current[0];
+        copy.currentLongitude = resolved.current[1];
+        if (!copy.currentCity) {
+          copy.currentCity = copy.recipientCity || copy.senderCity;
+        }
+        changed = true;
+      }
+      return changed ? copy : s;
+    });
   }
 
   public getShipmentByTracking(trackingNumber: string): Shipment | undefined {
@@ -582,10 +784,27 @@ class DataStore {
     const trackingNumber = `COUR-${Math.floor(10000 + Math.random() * 90000)}-${data.recipientState || 'US'}`;
     const now = new Date().toISOString();
 
+    const [senderLat, senderLng] =
+      data.senderLatitude !== undefined && data.senderLongitude !== undefined
+        ? [data.senderLatitude, data.senderLongitude]
+        : getCityCoordinates(data.senderCity, data.senderState);
+
+    const [recipLat, recipLng] =
+      data.recipientLatitude !== undefined && data.recipientLongitude !== undefined
+        ? [data.recipientLatitude, data.recipientLongitude]
+        : getCityCoordinates(data.recipientCity, data.recipientState);
+
     const newShipment: Shipment = {
       ...data,
       id: `shp_${Date.now()}`,
       trackingNumber,
+      senderLatitude: senderLat,
+      senderLongitude: senderLng,
+      recipientLatitude: recipLat,
+      recipientLongitude: recipLng,
+      currentLatitude: data.currentLatitude ?? senderLat,
+      currentLongitude: data.currentLongitude ?? senderLng,
+      currentCity: data.currentCity ?? `${data.senderCity} Hub`,
       createdAt: now,
       updatedAt: now,
       trackingLogs: [
@@ -595,6 +814,8 @@ class DataStore {
           eventType: 'CREATED',
           message: `Shipment order created by ${data.senderName}`,
           city: `${data.senderCity}, ${data.senderState}`,
+          latitude: senderLat,
+          longitude: senderLng,
           timestamp: now,
         },
       ],
@@ -608,8 +829,8 @@ class DataStore {
       shipmentId: newShipment.id,
       trackingNumber,
       customerName: data.senderName,
-      amount: data.price || 35.0,
-      currency: 'USD',
+      amount: data.price || 650.0,
+      currency: 'INR',
       status: 'PAID',
       paymentMethod: 'CREDIT_CARD',
       createdAt: now,
@@ -677,7 +898,7 @@ class DataStore {
       };
     }
 
-    const eventType = (newStatus as string) as any;
+    const eventType = (newStatus as string) as TrackingEventType;
     const logMessage =
       message || `Status updated to ${newStatus.replace(/_/g, ' ')} ${city ? 'at ' + city : ''}`;
 
@@ -701,7 +922,7 @@ class DataStore {
     this.addAuditLog({
       userId: user?.id || 'usr_agent1',
       userName: user?.name || 'Delivery Agent',
-      userRole: (user?.role as any) || 'DRIVER',
+      userRole: (user?.role as Role) || 'DRIVER',
       action: 'STATUS_UPDATE',
       entity: 'SHIPMENT',
       entityId: shipment.trackingNumber,
@@ -745,6 +966,46 @@ class DataStore {
 
       this.notify();
     }
+  }
+
+  public updateShipmentLocation(
+    shipmentId: string,
+    latitude: number,
+    longitude: number,
+    city?: string,
+  ): Shipment | null {
+    const shipments = this.getShipments();
+    const idx = shipments.findIndex((s) => s.id === shipmentId || s.trackingNumber.toUpperCase() === shipmentId.toUpperCase());
+    if (idx === -1) return null;
+
+    const shipment = shipments[idx]!;
+    const now = new Date().toISOString();
+
+    shipment.currentLatitude = latitude;
+    shipment.currentLongitude = longitude;
+    if (city) {
+      shipment.currentCity = city;
+    }
+    shipment.updatedAt = now;
+
+    const newLog: TrackingLog = {
+      id: `log_${Date.now()}`,
+      shipmentId: shipment.id,
+      eventType: 'LOCATION_UPDATE',
+      message: `Live GPS location updated${city ? `: ${city}` : ''} (${latitude.toFixed(4)}° N, ${Math.abs(longitude).toFixed(4)}° W)`,
+      city: city || shipment.currentCity || shipment.recipientCity,
+      latitude,
+      longitude,
+      timestamp: now,
+    };
+
+    if (!shipment.trackingLogs) shipment.trackingLogs = [];
+    shipment.trackingLogs.unshift(newLog);
+
+    shipments[idx] = shipment;
+    localStorage.setItem('cos_shipments', JSON.stringify(shipments));
+    this.notify();
+    return shipment;
   }
 
   // --- USERS ---
